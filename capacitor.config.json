@@ -1,0 +1,12 @@
+{
+  "appId": "com.jerry.mealtracker",
+  "appName": "MealTracker",
+  "webDir": ".",
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#0a0a0a"
+  },
+  "server": {
+    "iosScheme": "mealtracker"
+  }
+}

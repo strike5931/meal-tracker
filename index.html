@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="飲食追蹤">
+<meta name="theme-color" content="#0a0a0a">
+<title>每日飲食追蹤</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="header-left">
+      <div class="header-title">每日飲食追蹤</div>
+      <div class="date-label" id="date-label"></div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="MT.app.openSettings()" aria-label="設定">⚙️</button>
+      <button class="reset-btn" onclick="MT.app.resetToday()">重置</button>
+    </div>
+  </div>
+  <div class="day-toggle">
+    <button class="day-btn" data-day="train" onclick="MT.app.switchDay('train')">🔥 訓練日</button>
+    <button class="day-btn" data-day="rest" onclick="MT.app.switchDay('rest')">😴 休息日</button>
+  </div>
+</div>
+
+<div class="streak-bar">
+  <div class="streak-card">
+    <div class="streak-label">📅 最近 7 天紀錄</div>
+    <div class="streak-days" id="streak-days"></div>
+  </div>
+</div>
+
+<div id="history-banner" class="history-banner" style="display:none">
+  <span id="history-label">📋 查看中：</span>
+  <button class="back-btn" onclick="MT.app.backToToday()">返回今天</button>
+</div>
+
+<div class="trackers" id="trackers-section">
+  <div class="tracker-card">
+    <div class="tracker-label">💧 飲水量</div>
+    <div class="tracker-value water-value"><span id="water-val">0</span> <span>/ <span id="water-goal">7000</span> ml</span></div>
+    <div class="tracker-bar"><div class="tracker-fill water-fill" id="water-bar" style="width:0%"></div></div>
+    <div class="tracker-btns" id="water-btns"></div>
+  </div>
+  <div class="tracker-card">
+    <div class="tracker-label">🧂 鹽攝取</div>
+    <div class="tracker-value salt-value"><span id="salt-val">0</span> <span>/ <span id="salt-goal">10</span> g</span></div>
+    <div class="tracker-bar"><div class="tracker-fill salt-fill" id="salt-bar" style="width:0%"></div></div>
+    <div class="tracker-btns" id="salt-btns"></div>
+  </div>
+</div>
+
+<div class="meals-section" id="meals-container"></div>
+
+<div class="summary">
+  <div class="section-label">📊 今日營養概估</div>
+  <div class="summary-card" id="summary-card"></div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="modal" style="display:none">
+  <div class="modal-header">
+    <button class="modal-close" onclick="MT.settings.close()">✕</button>
+    <div class="modal-title">⚙️ 設定</div>
+    <div style="width:32px"></div>
+  </div>
+  <div class="modal-body" id="settings-body"></div>
+</div>
+
+<input type="file" id="import-file" accept="application/json" style="display:none">
+
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/render.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "name": "meal-tracker",
+  "version": "3.0.0",
+  "description": "每日飲食追蹤 — 訓練日 / 休息日菜單、飲水、鹽攝取",
+  "private": true,
+  "scripts": {
+    "serve": "python3 -m http.server 8000 --bind 0.0.0.0",
+    "ip": "ipconfig getifaddr en0 || ipconfig getifaddr en1",
+    "cap:init": "npx cap init 'MealTracker' 'com.jerry.mealtracker' --web-dir=.",
+    "cap:add-ios": "npx cap add ios",
+    "cap:sync": "npx cap sync ios",
+    "cap:open": "npx cap open ios",
+    "ios": "npm run cap:sync && npm run cap:open"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.0",
+    "@capacitor/core": "^6.1.0",
+    "@capacitor/ios": "^6.1.0"
+  }
+}
