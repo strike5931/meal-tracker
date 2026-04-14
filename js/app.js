@@ -2,20 +2,25 @@
 window.MT = window.MT || {};
 
 MT.app = (function() {
-  var settings;          // 使用者設定（menu/goals/macros/cardio）
-  var state;             // { dayType, water, salt, checked }
+  var settings;
+  var state;
   var viewingDate = null;
+  var editingWeight = false;
 
   function today() { return MT.render.dateToKey(new Date()); }
   function isViewingHistory() { return viewingDate !== null; }
 
   function init() {
     settings = MT.storage.loadSettings();
+    applyTheme(settings.theme);
+    listenSystemTheme();
+
     var saved = MT.storage.loadDay(today());
     state = {
       dayType: saved.dayType || 'train',
       water: saved.water || 0,
       salt: saved.salt || 0,
+      weight: (saved.weight == null ? null : saved.weight),
       checked: saved.checked || {}
     };
     document.getElementById('date-label').textContent = MT.render.formatDateLabel(today());
@@ -25,15 +30,27 @@ MT.app = (function() {
 
   function reloadSettings() {
     settings = MT.storage.loadSettings();
+    applyTheme(settings.theme);
     refreshUI();
   }
 
   function refreshUI() {
     MT.render.dayToggle(state);
     MT.render.trackers(state, settings);
+    MT.render.weight(state, settings, editingWeight);
     MT.render.meals(state, settings);
     MT.render.summary(state, settings);
     MT.render.streak(viewingDate, settings);
+    renderWeeklyReport();
+  }
+
+  function renderWeeklyReport() {
+    var loc = settings.weeklyReportLocation || 'both';
+    if (loc === 'main' || loc === 'both') {
+      MT.render.weeklyReport(settings, 'weekly-report-main', true);
+    } else {
+      document.getElementById('weekly-report-main').innerHTML = '';
+    }
   }
 
   function saveCurrentDay() {
@@ -42,6 +59,7 @@ MT.app = (function() {
       dayType: state.dayType,
       water: state.water,
       salt: state.salt,
+      weight: state.weight,
       checked: state.checked
     });
   }
@@ -52,6 +70,8 @@ MT.app = (function() {
     MT.render.dayToggle(state);
     MT.render.meals(state, settings);
     MT.render.summary(state, settings);
+    MT.render.streak(viewingDate, settings);
+    renderWeeklyReport();
     saveCurrentDay();
     haptic();
   }
@@ -61,6 +81,7 @@ MT.app = (function() {
     state.checked[id] = !state.checked[id];
     MT.render.meals(state, settings);
     MT.render.streak(viewingDate, settings);
+    renderWeeklyReport();
     saveCurrentDay();
     haptic();
   }
@@ -70,6 +91,7 @@ MT.app = (function() {
     state.water = Math.max(0, Math.min(20000, state.water + amount));
     MT.render.trackers(state, settings);
     MT.render.streak(viewingDate, settings);
+    renderWeeklyReport();
     saveCurrentDay();
     haptic();
   }
@@ -79,16 +101,53 @@ MT.app = (function() {
     state.salt = Math.max(0, Math.min(50, state.salt + amount));
     MT.render.trackers(state, settings);
     MT.render.streak(viewingDate, settings);
+    renderWeeklyReport();
     saveCurrentDay();
     haptic();
   }
 
+  // ==== 體重 ====
+  function editWeight() {
+    if (isViewingHistory()) return;
+    editingWeight = true;
+    MT.render.weight(state, settings, true);
+  }
+
+  function cancelWeight() {
+    editingWeight = false;
+    MT.render.weight(state, settings, false);
+  }
+
+  function saveWeight() {
+    var el = document.getElementById('weight-input');
+    if (!el) return;
+    var raw = el.value.trim();
+    if (raw === '') {
+      state.weight = null;
+    } else {
+      var n = parseFloat(raw);
+      if (isNaN(n) || n < 30 || n > 500) {
+        toast('⚠️ 體重需在 30–500');
+        return;
+      }
+      state.weight = n;
+    }
+    editingWeight = false;
+    saveCurrentDay();
+    MT.render.weight(state, settings, false);
+    MT.render.streak(viewingDate, settings);
+    renderWeeklyReport();
+    haptic();
+    toast(state.weight != null ? '✅ 已記錄體重' : '已清除體重');
+  }
+
   function resetToday() {
     if (isViewingHistory()) return;
-    if (!confirm('確定要重置今天的紀錄嗎？')) return;
+    if (!confirm('確定要重置今天的紀錄嗎？(體重不會被清除)')) return;
     state.water = 0;
     state.salt = 0;
     state.checked = {};
+    // 體重保留
     refreshUI();
     saveCurrentDay();
   }
@@ -96,10 +155,12 @@ MT.app = (function() {
   function viewDate(dateStr) {
     if (dateStr === today()) { backToToday(); return; }
     viewingDate = dateStr;
+    editingWeight = false;
     var data = MT.storage.loadDay(dateStr);
     state.dayType = data.dayType;
     state.water = data.water;
     state.salt = data.salt;
+    state.weight = (data.weight == null ? null : data.weight);
     state.checked = data.checked;
 
     document.getElementById('history-banner').style.display = 'flex';
@@ -107,6 +168,7 @@ MT.app = (function() {
     document.getElementById('date-label').textContent = MT.render.formatDateLabel(dateStr);
 
     document.getElementById('trackers-section').classList.add('readonly-overlay');
+    document.getElementById('weight-section').classList.add('readonly-overlay');
     document.getElementById('meals-container').classList.add('readonly-overlay');
     document.querySelector('.day-toggle').classList.add('readonly-overlay');
     document.querySelector('.reset-btn').style.display = 'none';
@@ -116,16 +178,19 @@ MT.app = (function() {
 
   function backToToday() {
     viewingDate = null;
+    editingWeight = false;
     var data = MT.storage.loadDay(today());
     state.dayType = data.dayType || 'train';
     state.water = data.water || 0;
     state.salt = data.salt || 0;
+    state.weight = (data.weight == null ? null : data.weight);
     state.checked = data.checked || {};
 
     document.getElementById('history-banner').style.display = 'none';
     document.getElementById('date-label').textContent = MT.render.formatDateLabel(today());
 
     document.getElementById('trackers-section').classList.remove('readonly-overlay');
+    document.getElementById('weight-section').classList.remove('readonly-overlay');
     document.getElementById('meals-container').classList.remove('readonly-overlay');
     document.querySelector('.day-toggle').classList.remove('readonly-overlay');
     document.querySelector('.reset-btn').style.display = '';
@@ -135,7 +200,27 @@ MT.app = (function() {
 
   function openSettings() { MT.settings.open(); }
 
-  // ---- 小工具 ----
+  // ==== Theme ====
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme || 'auto');
+    // 同步 meta theme-color（iOS 狀態列顏色）
+    var meta = document.getElementById('theme-color-meta');
+    if (meta) {
+      var isLight = (theme === 'light') ||
+        (theme === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches);
+      meta.setAttribute('content', isLight ? '#f5f5f7' : '#0a0a0a');
+    }
+  }
+
+  function listenSystemTheme() {
+    if (!window.matchMedia) return;
+    var mq = window.matchMedia('(prefers-color-scheme: light)');
+    var handler = function() { if (settings.theme === 'auto') applyTheme('auto'); };
+    if (mq.addEventListener) mq.addEventListener('change', handler);
+    else if (mq.addListener) mq.addListener(handler);
+  }
+
+  // ==== toast ====
   var toastTimer;
   function toast(msg) {
     var el = document.createElement('div');
@@ -149,29 +234,25 @@ MT.app = (function() {
   }
 
   function haptic() {
-    // iOS Safari 目前不支援 vibrate，但 PWA 環境 + Capacitor 可用
     if (navigator.vibrate) { try { navigator.vibrate(5); } catch (e) {} }
   }
 
   function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
-    // file:// 下註冊會失敗，直接跳過
     if (location.protocol === 'file:') return;
     navigator.serviceWorker.register('sw.js').catch(function(e) {
       console.warn('SW 註冊失敗', e);
     });
   }
 
-  // 自動檢測跨日：若應用在前台且日期變了，重新載入今天的 state
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState === 'visible' && !isViewingHistory()) {
       var saved = MT.storage.loadDay(today());
-      if (saved.dayType !== state.dayType || saved.water !== state.water || saved.salt !== state.salt) {
-        state.dayType = saved.dayType || 'train';
-        state.water = saved.water || 0;
-        state.salt = saved.salt || 0;
-        state.checked = saved.checked || {};
-      }
+      state.dayType = saved.dayType || state.dayType || 'train';
+      state.water = saved.water || 0;
+      state.salt = saved.salt || 0;
+      state.weight = (saved.weight == null ? null : saved.weight);
+      state.checked = saved.checked || {};
       document.getElementById('date-label').textContent = MT.render.formatDateLabel(today());
       refreshUI();
     }
@@ -185,9 +266,11 @@ MT.app = (function() {
     switchDay: switchDay,
     toggleMeal: toggleMeal,
     addWater: addWater, addSalt: addSalt,
+    editWeight: editWeight, saveWeight: saveWeight, cancelWeight: cancelWeight,
     resetToday: resetToday,
     viewDate: viewDate, backToToday: backToToday,
     openSettings: openSettings,
+    applyTheme: applyTheme,
     toast: toast
   };
 })();

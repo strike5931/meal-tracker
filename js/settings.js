@@ -1,11 +1,11 @@
-// 設定頁面：目標、菜單、宏量、資料管理
+// 設定頁：外觀、目標、菜單、體重、統計入口、門檻、資料管理
 window.MT = window.MT || {};
 
 MT.settings = (function() {
   var modal = null;
   var body = null;
   var currentTab = 'train';
-  var draft = null;   // 編輯中副本
+  var draft = null;
 
   function esc(s) { return MT.render.escapeHTML(s); }
 
@@ -19,48 +19,161 @@ MT.settings = (function() {
 
   function close() {
     modal.style.display = 'none';
-    // 已在每次變更時自動儲存，這裡關閉即可
     MT.app.reloadSettings();
   }
 
   function render() {
-    body.innerHTML = renderGoals() + renderMealsSection() + renderMacrosSection() + renderCardioSection() + renderDataSection() + renderAboutSection();
+    body.innerHTML =
+      renderStatsEntry() +
+      renderTheme() +
+      renderGoals() +
+      renderWeightSettings() +
+      renderMealsSection() +
+      renderMacrosSection() +
+      renderCardioSection() +
+      renderThresholds() +
+      renderWeeklyReportSettings() +
+      renderDataSection() +
+      renderAboutSection();
   }
 
+  // ---- 統計頁入口 ----
+  function renderStatsEntry() {
+    return '<div class="settings-section">' +
+      '<button class="btn full primary" onclick="MT.statsui.open()">📊 查看完整統計</button>' +
+    '</div>';
+  }
+
+  // ---- 外觀 ----
+  function renderTheme() {
+    var t = draft.theme;
+    return '<div class="settings-section">' +
+      '<div class="settings-section-title">🎨 外觀</div>' +
+      '<div class="settings-row"><label>主題</label>' +
+        segmented([
+          { v: 'auto',  l: '自動' },
+          { v: 'dark',  l: '深色' },
+          { v: 'light', l: '淺色' }
+        ], t, 'MT.settings.setTheme') +
+      '</div>' +
+      (t === 'auto' ? '<div class="settings-row" style="border:none"><label>目前</label><span style="color:var(--text-dim);font-size:12px">'+esc(currentEffectiveTheme())+'（跟隨系統）</span></div>' : '') +
+    '</div>';
+  }
+
+  function currentEffectiveTheme() {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) return '淺色';
+    return '深色';
+  }
+
+  // ---- 目標 ----
   function renderGoals() {
     var g = draft.goals;
-    return '' +
-      '<div class="settings-section">' +
-        '<div class="settings-section-title">🎯 每日目標</div>' +
-        row('飲水量 (ml)', numInput('water', g.water, 500, 20000)) +
-        row('鹽攝取 (g)', numInput('salt', g.salt, 1, 30)) +
-        '<div class="settings-row"><label>飲水快捷按鈕 (ml)</label>' +
-          '<div class="inc-editor">' +
-            incInput('water', 0, g.waterIncrements[0]) +
-            incInput('water', 1, g.waterIncrements[1]) +
-            incInput('water', 2, g.waterIncrements[2]) +
-          '</div></div>' +
-        '<div class="settings-row"><label>鹽快捷按鈕 (g)</label>' +
-          '<div class="inc-editor">' +
-            incInput('salt', 0, g.saltIncrements[0]) +
-            incInput('salt', 1, g.saltIncrements[1]) +
-            incInput('salt', 2, g.saltIncrements[2]) +
-          '</div></div>' +
-      '</div>';
+    return '<div class="settings-section">' +
+      '<div class="settings-section-title">🎯 每日目標</div>' +
+      rowLabel('飲水量 (ml)', numInput('water', g.water, 500, 20000)) +
+      rowLabel('鹽攝取 (g)', numInput('salt', g.salt, 1, 30)) +
+      '<div class="settings-row"><label>飲水快捷按鈕 (ml)</label>' +
+        '<div class="inc-editor">' +
+          incInput('water', 0, g.waterIncrements[0]) +
+          incInput('water', 1, g.waterIncrements[1]) +
+          incInput('water', 2, g.waterIncrements[2]) +
+        '</div></div>' +
+      '<div class="settings-row"><label>鹽快捷按鈕 (g)</label>' +
+        '<div class="inc-editor">' +
+          incInput('salt', 0, g.saltIncrements[0]) +
+          incInput('salt', 1, g.saltIncrements[1]) +
+          incInput('salt', 2, g.saltIncrements[2]) +
+        '</div></div>' +
+    '</div>';
   }
 
-  function row(label, inputHTML) {
+  // ---- 體重 ----
+  function renderWeightSettings() {
+    var w = draft.weight;
+    return '<div class="settings-section">' +
+      '<div class="settings-section-title">⚖️ 體重</div>' +
+      '<div class="settings-row"><label>單位</label>' +
+        segmented([
+          { v: 'kg', l: 'kg' },
+          { v: 'lb', l: 'lb' }
+        ], w.unit, 'MT.settings.setWeightUnit') +
+      '</div>' +
+      '<div class="settings-row"><label>小數位</label>' +
+        segmented([
+          { v: '0.1', l: '0.1' },
+          { v: '0.5', l: '0.5' },
+          { v: '1',   l: '1' }
+        ], String(w.precision), 'MT.settings.setWeightPrecision') +
+      '</div>' +
+      '<div class="settings-row"><label>目標體重 ('+esc(w.unit)+')</label>' +
+        '<input class="settings-input" type="number" step="0.1" placeholder="可留空" value="'+(w.target!=null?w.target:'')+'" oninput="MT.settings.setWeightTarget(this.value)">' +
+      '</div>' +
+      '<div class="settings-row"><label>顯示 7 / 30 天均</label>' +
+        '<input type="checkbox" '+(w.showAverages?'checked':'')+' onchange="MT.settings.setWeightShowAverages(this.checked)" style="width:20px;height:20px">' +
+      '</div>' +
+    '</div>';
+  }
+
+  // ---- 門檻 ----
+  function renderThresholds() {
+    var t = draft.thresholds;
+    return '<div class="settings-section">' +
+      '<div class="settings-section-title">🏆 完美日 / 達標日門檻</div>' +
+      '<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">調整完美日與達標日的判定比例（0–100%）</div>' +
+      '<div style="font-size:11px;color:var(--text-dim);margin:4px 0 4px">✨ 完美日</div>' +
+      rowLabel('餐點完成', pctInput('perfectMeals', t.perfectMeals)) +
+      rowLabel('飲水', pctInput('perfectWater', t.perfectWater)) +
+      rowLabel('鹽', pctInput('perfectSalt', t.perfectSalt)) +
+      '<div style="font-size:11px;color:var(--text-dim);margin:8px 0 4px">✅ 達標日</div>' +
+      rowLabel('餐點完成', pctInput('goalMeals', t.goalMeals)) +
+      rowLabel('飲水', pctInput('goalWater', t.goalWater)) +
+      rowLabel('鹽', pctInput('goalSalt', t.goalSalt)) +
+    '</div>';
+  }
+
+  // ---- 週報 ----
+  function renderWeeklyReportSettings() {
+    return '<div class="settings-section">' +
+      '<div class="settings-section-title">📅 週報</div>' +
+      '<div class="settings-row"><label>顯示位置</label>' +
+        segmented([
+          { v: 'main',  l: '主頁' },
+          { v: 'stats', l: '統計頁' },
+          { v: 'both',  l: '都顯示' }
+        ], draft.weeklyReportLocation, 'MT.settings.setWeeklyLocation') +
+      '</div>' +
+      '<div class="settings-row"><label>週起始日</label>' +
+        segmented([
+          { v: '1', l: '週一' },
+          { v: '0', l: '週日' }
+        ], String(draft.weekStart), 'MT.settings.setWeekStart') +
+      '</div>' +
+    '</div>';
+  }
+
+  // ---- helpers ----
+  function rowLabel(label, inputHTML) {
     return '<div class="settings-row"><label>'+esc(label)+'</label>'+inputHTML+'</div>';
   }
-
   function numInput(key, value, min, max) {
     return '<input class="settings-input" type="number" min="'+min+'" max="'+max+'" value="'+value+'" oninput="MT.settings.updateGoal(\''+key+'\', this.value)">';
   }
-
   function incInput(key, idx, value) {
     return '<input type="number" value="'+value+'" oninput="MT.settings.updateIncrement(\''+key+'\', '+idx+', this.value)">';
   }
+  function pctInput(key, ratio) {
+    var pct = Math.round((ratio || 0) * 100);
+    return '<input class="settings-input" type="number" min="0" max="100" value="'+pct+'" oninput="MT.settings.updateThreshold(\''+key+'\', this.value)"> <span style="font-size:12px;color:var(--text-dim);margin-left:4px">%</span>';
+  }
 
+  function segmented(options, current, handlerName) {
+    return '<div class="segmented">' + options.map(function(o) {
+      var cls = String(current) === String(o.v) ? 'active' : '';
+      return '<button class="'+cls+'" onclick="'+handlerName+'(\''+o.v+'\')">'+esc(o.l)+'</button>';
+    }).join('') + '</div>';
+  }
+
+  // ---- 菜單 ----
   function renderMealsSection() {
     var list = draft.meals[currentTab] || [];
     var h = '<div class="settings-section">' +
@@ -69,9 +182,7 @@ MT.settings = (function() {
         '<button class="sub-tab '+(currentTab==='train'?'active':'')+'" onclick="MT.settings.switchTab(\'train\')">🔥 訓練日 ('+draft.meals.train.length+')</button>' +
         '<button class="sub-tab '+(currentTab==='rest'?'active':'')+'" onclick="MT.settings.switchTab(\'rest\')">😴 休息日 ('+draft.meals.rest.length+')</button>' +
       '</div>';
-    list.forEach(function(m, idx) {
-      h += mealEditor(m, idx);
-    });
+    list.forEach(function(m, idx) { h += mealEditor(m, idx); });
     h += '<button class="btn full" onclick="MT.settings.addMeal()">＋ 新增一餐</button>';
     h += '</div>';
     return h;
@@ -101,7 +212,7 @@ MT.settings = (function() {
         '<button class="btn small" onclick="MT.settings.moveMeal('+idx+', 1)">↓</button>' +
         '<button class="btn small danger" onclick="MT.settings.deleteMeal('+idx+')">刪除</button>' +
       '</div>' +
-      '</div>';
+    '</div>';
   }
 
   function renderMacrosSection() {
@@ -109,15 +220,15 @@ MT.settings = (function() {
     return '<div class="settings-section">' +
       '<div class="settings-section-title">📊 營養概估</div>' +
       '<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">🔥 訓練日</div>' +
-      row('熱量', macroInput('train', 'kcal', t.kcal)) +
-      row('碳水', macroInput('train', 'carbs', t.carbs)) +
-      row('蛋白', macroInput('train', 'protein', t.protein)) +
-      row('脂肪', macroInput('train', 'fat', t.fat)) +
+      rowLabel('熱量', macroInput('train', 'kcal', t.kcal)) +
+      rowLabel('碳水', macroInput('train', 'carbs', t.carbs)) +
+      rowLabel('蛋白', macroInput('train', 'protein', t.protein)) +
+      rowLabel('脂肪', macroInput('train', 'fat', t.fat)) +
       '<div style="font-size:11px;color:var(--text-dim);margin:10px 0 8px">😴 休息日</div>' +
-      row('熱量', macroInput('rest', 'kcal', r.kcal)) +
-      row('碳水', macroInput('rest', 'carbs', r.carbs)) +
-      row('蛋白', macroInput('rest', 'protein', r.protein)) +
-      row('脂肪', macroInput('rest', 'fat', r.fat)) +
+      rowLabel('熱量', macroInput('rest', 'kcal', r.kcal)) +
+      rowLabel('碳水', macroInput('rest', 'carbs', r.carbs)) +
+      rowLabel('蛋白', macroInput('rest', 'protein', r.protein)) +
+      rowLabel('脂肪', macroInput('rest', 'fat', r.fat)) +
     '</div>';
   }
 
@@ -160,14 +271,34 @@ MT.settings = (function() {
     return '<div class="settings-section">' +
       '<div class="settings-section-title">ℹ️ 關於</div>' +
       '<div style="font-size:12px;color:var(--text-dim);line-height:1.8">' +
-        '每日飲食追蹤 · v3<br>' +
-        '資料僅儲存在本機 localStorage<br>' +
+        '每日飲食追蹤 · v4<br>' +
+        '資料僅儲存在本機 localStorage（保留 365 天）<br>' +
         '換機或清除瀏覽器資料前請先匯出' +
       '</div>' +
     '</div>';
   }
 
-  // ---- 更新函式 ----
+  // ==== 更新函式 ====
+  function setTheme(v) { draft.theme = v; MT.storage.saveSettings(draft); MT.app.applyTheme(v); render(); }
+
+  function setWeightUnit(v) { draft.weight.unit = v; MT.storage.saveSettings(draft); render(); }
+  function setWeightPrecision(v) { draft.weight.precision = parseFloat(v); MT.storage.saveSettings(draft); render(); }
+  function setWeightTarget(v) {
+    draft.weight.target = v === '' ? null : parseFloat(v);
+    if (isNaN(draft.weight.target)) draft.weight.target = null;
+    MT.storage.saveSettings(draft);
+  }
+  function setWeightShowAverages(v) { draft.weight.showAverages = !!v; MT.storage.saveSettings(draft); }
+
+  function setWeeklyLocation(v) { draft.weeklyReportLocation = v; MT.storage.saveSettings(draft); render(); }
+  function setWeekStart(v) { draft.weekStart = parseInt(v); MT.storage.saveSettings(draft); render(); }
+
+  function updateThreshold(key, v) {
+    var n = parseFloat(v); if (isNaN(n)) return;
+    draft.thresholds[key] = Math.max(0, Math.min(1, n / 100));
+    MT.storage.saveSettings(draft);
+  }
+
   function updateGoal(key, v) {
     var n = parseFloat(v); if (isNaN(n)) return;
     draft.goals[key] = n;
@@ -180,10 +311,7 @@ MT.settings = (function() {
     MT.storage.saveSettings(draft);
   }
   function switchTab(t) { currentTab = t; render(); }
-  function updateMeal(idx, key, v) {
-    draft.meals[currentTab][idx][key] = v;
-    MT.storage.saveSettings(draft);
-  }
+  function updateMeal(idx, key, v) { draft.meals[currentTab][idx][key] = v; MT.storage.saveSettings(draft); }
   function addMeal() {
     var prefix = currentTab === 'train' ? 't' : 'r';
     var id = prefix + Date.now().toString(36);
@@ -205,14 +333,8 @@ MT.settings = (function() {
     MT.storage.saveSettings(draft);
     render();
   }
-  function updateMacro(day, key, v) {
-    draft.macros[day][key] = v;
-    MT.storage.saveSettings(draft);
-  }
-  function updateCardio(key, v) {
-    draft.cardio[key] = v;
-    MT.storage.saveSettings(draft);
-  }
+  function updateMacro(day, key, v) { draft.macros[day][key] = v; MT.storage.saveSettings(draft); }
+  function updateCardio(key, v) { draft.cardio[key] = v; MT.storage.saveSettings(draft); }
 
   // ---- 資料操作 ----
   function exportData() {
@@ -241,6 +363,7 @@ MT.settings = (function() {
           if (!confirm('匯入將覆蓋目前資料，確定？')) return;
           MT.storage.importAll(obj);
           draft = JSON.parse(JSON.stringify(MT.storage.loadSettings()));
+          MT.app.applyTheme(draft.theme);
           render();
           MT.app.toast('✅ 匯入成功');
         } catch (e) {
@@ -256,6 +379,7 @@ MT.settings = (function() {
     if (!confirm('還原預設菜單 / 目標？（每日紀錄不會被刪除）')) return;
     MT.storage.resetSettings();
     draft = JSON.parse(JSON.stringify(MT.storage.loadSettings()));
+    MT.app.applyTheme(draft.theme);
     render();
     MT.app.toast('已還原預設');
   }
@@ -265,6 +389,7 @@ MT.settings = (function() {
     if (!confirm('再次確認：真的清除全部資料？')) return;
     MT.storage.clearAll();
     draft = JSON.parse(JSON.stringify(MT.storage.loadSettings()));
+    MT.app.applyTheme(draft.theme);
     render();
     MT.app.toast('已清除');
   }
@@ -272,6 +397,11 @@ MT.settings = (function() {
   return {
     open: open, close: close,
     switchTab: switchTab,
+    setTheme: setTheme,
+    setWeightUnit: setWeightUnit, setWeightPrecision: setWeightPrecision,
+    setWeightTarget: setWeightTarget, setWeightShowAverages: setWeightShowAverages,
+    setWeeklyLocation: setWeeklyLocation, setWeekStart: setWeekStart,
+    updateThreshold: updateThreshold,
     updateGoal: updateGoal, updateIncrement: updateIncrement,
     updateMeal: updateMeal, addMeal: addMeal, deleteMeal: deleteMeal, moveMeal: moveMeal,
     updateMacro: updateMacro, updateCardio: updateCardio,

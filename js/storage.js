@@ -4,7 +4,7 @@ window.MT = window.MT || {};
 MT.storage = (function() {
   var DAYS_KEY = 'mealTracker_v3_days';
   var SETTINGS_KEY = 'mealTracker_v3_settings';
-  var MAX_DAYS = 60;  // 保留 60 天歷史
+  var MAX_DAYS = 365;  // v4: 保留 1 年歷史（統計需要）
 
   function safeParse(raw, fallback) {
     try { return raw ? JSON.parse(raw) : fallback; }
@@ -14,7 +14,14 @@ MT.storage = (function() {
   function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
 
   function loadAllDays() {
-    return safeParse(localStorage.getItem(DAYS_KEY), {});
+    var all = safeParse(localStorage.getItem(DAYS_KEY), {});
+    // 相容舊資料：補齊 weight 欄
+    for (var k in all) {
+      if (all[k] && typeof all[k] === 'object' && !('weight' in all[k])) {
+        all[k].weight = null;
+      }
+    }
+    return all;
   }
 
   function saveAllDays(all) {
@@ -32,7 +39,7 @@ MT.storage = (function() {
 
   function loadDay(dateStr) {
     var all = loadAllDays();
-    return all[dateStr] || { dayType: 'train', water: 0, salt: 0, checked: {} };
+    return all[dateStr] || { dayType: 'train', water: 0, salt: 0, weight: null, checked: {} };
   }
 
   function saveDay(dateStr, data) {
@@ -41,10 +48,8 @@ MT.storage = (function() {
     saveAllDays(all);
   }
 
-  function loadSettings() {
-    var raw = safeParse(localStorage.getItem(SETTINGS_KEY), null);
+  function mergeSettings(raw) {
     if (!raw) return deepClone(MT.defaults);
-    // 缺欄位則以預設補齊
     return {
       goals:  Object.assign({}, MT.defaults.goals,  raw.goals  || {}),
       meals:  {
@@ -55,8 +60,17 @@ MT.storage = (function() {
         train: Object.assign({}, MT.defaults.macros.train, (raw.macros && raw.macros.train) || {}),
         rest:  Object.assign({}, MT.defaults.macros.rest,  (raw.macros && raw.macros.rest)  || {})
       },
-      cardio: Object.assign({}, MT.defaults.cardio, raw.cardio || {})
+      cardio: Object.assign({}, MT.defaults.cardio, raw.cardio || {}),
+      theme: raw.theme || MT.defaults.theme,
+      weight: Object.assign({}, MT.defaults.weight, raw.weight || {}),
+      weekStart: (typeof raw.weekStart === 'number') ? raw.weekStart : MT.defaults.weekStart,
+      weeklyReportLocation: raw.weeklyReportLocation || MT.defaults.weeklyReportLocation,
+      thresholds: Object.assign({}, MT.defaults.thresholds, raw.thresholds || {})
     };
+  }
+
+  function loadSettings() {
+    return mergeSettings(safeParse(localStorage.getItem(SETTINGS_KEY), null));
   }
 
   function saveSettings(settings) {
@@ -64,13 +78,11 @@ MT.storage = (function() {
     catch (e) { console.warn('設定儲存失敗', e); }
   }
 
-  function resetSettings() {
-    localStorage.removeItem(SETTINGS_KEY);
-  }
+  function resetSettings() { localStorage.removeItem(SETTINGS_KEY); }
 
   function exportAll() {
     return {
-      version: 3,
+      version: 4,
       exportedAt: new Date().toISOString(),
       days: loadAllDays(),
       settings: safeParse(localStorage.getItem(SETTINGS_KEY), null)
@@ -93,15 +105,9 @@ MT.storage = (function() {
   }
 
   return {
-    loadAllDays: loadAllDays,
-    saveAllDays: saveAllDays,
-    loadDay: loadDay,
-    saveDay: saveDay,
-    loadSettings: loadSettings,
-    saveSettings: saveSettings,
-    resetSettings: resetSettings,
-    exportAll: exportAll,
-    importAll: importAll,
-    clearAll: clearAll
+    loadAllDays: loadAllDays, saveAllDays: saveAllDays,
+    loadDay: loadDay, saveDay: saveDay,
+    loadSettings: loadSettings, saveSettings: saveSettings, resetSettings: resetSettings,
+    exportAll: exportAll, importAll: importAll, clearAll: clearAll
   };
 })();

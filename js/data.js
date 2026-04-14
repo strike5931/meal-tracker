@@ -29,5 +29,30 @@ MT.defaults = {
     train: { kcal: '~2,500', carbs: '363g', protein: '~155g', fat: '~45g' },
     rest:  { kcal: '~2,000', carbs: '174g', protein: '~175g', fat: '~55g' }
   },
-  cardio: { enabled: true, text: '練後有氧 25 分鐘｜心律 120-130' }
+  cardio: { enabled: true, text: '練後有氧 25 分鐘｜心律 120-130' },
+
+  // v4: 外觀
+  theme: 'auto',            // auto / dark / light
+
+  // v4: 體重
+  weight: {
+    unit: 'kg',             // kg / lb
+    precision: 0.1,         // 0.1 / 0.5 / 1
+    target: null,           // number | null（無目標）
+    showAverages: true
+  },
+
+  // v4: 週報與統計
+  weekStart: 1,             // 1=週一, 0=週日
+  weeklyReportLocation: 'both',  // main / stats / both
+
+  // v4: 完美日 / 達標日門檻（比例 0-1）
+  thresholds: {
+    perfectWater: 1.0,
+    perfectSalt: 0.8,
+    perfectMeals: 1.0,
+    goalWater: 0.7,
+    goalSalt: 0.8,
+    goalMeals: 0.8
+  }
 };
