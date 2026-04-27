@@ -1,5 +1,5 @@
 // Service Worker - 離線快取
-var CACHE = 'meal-tracker-v4';
+var CACHE = 'meal-tracker-v5';
 var ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ var ASSETS = [
   './css/styles.css',
   './js/data.js',
   './js/storage.js',
+  './js/timing.js',
   './js/stats.js',
   './js/render.js',
   './js/statsui.js',

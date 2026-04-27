@@ -54,5 +54,15 @@ MT.defaults = {
     goalWater: 0.7,
     goalSalt: 0.8,
     goalMeals: 0.8
+  },
+
+  // v5: 排餐時間建議（依 5 原則）
+  mealTiming: {
+    enabled: true,
+    intervalHours: 3,            // 標準餐間隔（h）
+    preWorkoutToTraining: 45,    // 練前餐 → 訓練開始（min）
+    trainingDuration: 60,        // 訓練時長 含有氧（min）
+    postWorkoutToNext: 45,       // 練後餐 → 第三餐（min，教練規定）
+    postMeal3IntervalHours: 3    // 第三餐 → 第四餐（h）
   }
 };

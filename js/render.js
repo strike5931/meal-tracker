@@ -120,18 +120,68 @@ MT.render = (function() {
   }
 
   // ==== Meals ====
-  function meals(state, settings) {
+  function meals(state, settings, isEditingAnchor) {
     var container = document.getElementById('meals-container');
     var dayMeals = settings.meals[state.dayType] || [];
     var isRest = state.dayType === 'rest';
     var macro = settings.macros[state.dayType] || { kcal: '' };
 
-    var html = '<div class="section-label">🍽️ '+(isRest?'休息日':'訓練日')+'菜單 ・ ' + escapeHTML(macro.kcal) + ' kcal</div>';
+    // 計算排餐時間
+    var mt = settings.mealTiming || {};
+    var timingEnabled = mt.enabled !== false && dayMeals.length > 0;
+    var timing = null;
+    if (timingEnabled && state.firstMealTime) {
+      timing = MT.timing.compute(state.firstMealTime, dayMeals, mt);
+    }
 
-    dayMeals.forEach(function(meal) {
+    var html = '<div class="section-label">🍽️ '+(isRest?'休息日':'訓練日')+'菜單 ・ ' + escapeHTML(macro.kcal) + ' kcal';
+    if (timing) {
+      var win = MT.timing.totalWindow(timing).toFixed(1);
+      var winCls = (parseFloat(win) > 14) ? 'style="color:var(--warn)"' : '';
+      html += ' ・ <span '+winCls+'>窗口 ' + win + 'h</span>';
+    }
+    html += '</div>';
+
+    dayMeals.forEach(function(meal, idx) {
       var ic = state.checked[meal.id] ? 'checked' : '';
       var tc = isRest ? 'rest-tag' : '';
       var nc = isRest ? 'rest-note' : '';
+
+      // 建議時間
+      var timingHTML = '';
+      if (timingEnabled && idx === 0) {
+        // 第一餐：顯示錨點 / 編輯
+        if (isEditingAnchor) {
+          timingHTML = '<div class="meal-timing">' +
+            '<span class="t-icon">🕐</span>' +
+            '<input id="anchor-input" class="anchor-input" type="time" value="'+(state.firstMealTime || MT.timing.nowHHMM())+'" onclick="event.stopPropagation()">' +
+            '<button class="t-btn ok" onclick="event.stopPropagation();MT.app.saveAnchor()">✓</button>' +
+            '<button class="t-btn" onclick="event.stopPropagation();MT.app.cancelAnchor()">✕</button>' +
+          '</div>';
+        } else if (state.firstMealTime) {
+          timingHTML = '<div class="meal-timing">' +
+            '<span class="t-icon">🕐</span>' +
+            '<span><b>錨點 ' + escapeHTML(state.firstMealTime) + '</b></span>' +
+            '<button class="t-btn" onclick="event.stopPropagation();MT.app.editAnchor()">編輯</button>' +
+          '</div>';
+        } else {
+          timingHTML = '<div class="meal-timing dim">' +
+            '<span class="t-icon">🕐</span>勾選第一餐自動排出時間表' +
+          '</div>';
+        }
+      } else if (timingEnabled && timing && timing.times[idx] != null) {
+        var role = timing.roles[idx];
+        var label = role === 'pre' ? '練前' : (role === 'post' ? '練後' : '建議');
+        var diff = ((timing.times[idx] - timing.anchor) / 60).toFixed(1).replace(/\.0$/, '');
+        timingHTML = '<div class="meal-timing">' +
+          '<span class="t-icon">🕐</span>' +
+          '<b>' + label + ' ' + MT.timing.formatTime(timing.times[idx]) + '</b>' +
+          '<span class="t-sub">+' + diff + 'h</span>' +
+        '</div>';
+      } else if (timingEnabled) {
+        timingHTML = '<div class="meal-timing dim"><span class="t-icon">🕐</span>—</div>';
+      }
+
       html += '<div class="meal-card '+ic+'" onclick="MT.app.toggleMeal(\''+escapeHTML(meal.id)+'\')">' +
         '<div class="meal-inner">' +
           '<div class="meal-check"></div>' +
@@ -141,18 +191,30 @@ MT.render = (function() {
             '</div>' +
             '<div class="meal-items">'+escapeHTML(meal.items)+'</div>' +
             (meal.note ? '<div class="meal-note '+nc+'">⚠️ '+escapeHTML(meal.note)+'</div>' : '') +
+            timingHTML +
           '</div>' +
         '</div></div>';
     });
 
     if (state.dayType === 'train' && settings.cardio && settings.cardio.enabled) {
       var cc = state.checked['cardio'] ? 'checked' : '';
+      var trainTimeText = '';
+      if (timing && timing.trainingStart != null && timing.trainingEnd != null) {
+        trainTimeText = ' ・ 🕐 ' + MT.timing.formatTime(timing.trainingStart) + ' - ' + MT.timing.formatTime(timing.trainingEnd);
+      }
       html += '<div class="cardio-card '+cc+'" onclick="MT.app.toggleMeal(\'cardio\')">' +
         '<div class="cardio-icon">🏃</div>' +
-        '<div class="cardio-text">'+escapeHTML(settings.cardio.text)+'</div></div>';
+        '<div class="cardio-text">'+escapeHTML(settings.cardio.text)+escapeHTML(trainTimeText)+'</div></div>';
     }
 
     container.innerHTML = html;
+
+    if (isEditingAnchor) {
+      setTimeout(function() {
+        var el = document.getElementById('anchor-input');
+        if (el) el.focus();
+      }, 50);
+    }
   }
 
   function summary(state, settings) {

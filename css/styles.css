@@ -349,6 +349,60 @@ button { font-family: inherit; }
 .meal-note { font-size: 11px; color: var(--accent-train); margin-top: 6px; font-weight: 500; }
 .meal-note.rest-note { color: var(--accent-rest); }
 
+/* meal timing line */
+.meal-timing {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent-weight);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.meal-timing.dim { color: var(--text-dim); }
+.meal-timing .t-icon { font-size: 11px; }
+.meal-timing .t-sub { color: var(--text-dim); font-weight: 400; }
+.meal-timing .anchor-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 6px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+}
+.meal-timing .t-btn {
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.meal-timing .t-btn.ok {
+  background: var(--accent-weight); color: #fff; border-color: var(--accent-weight);
+}
+
+/* meal timing principles details */
+.timing-principles { margin-top: 10px; }
+.timing-principles summary {
+  cursor: pointer; font-size: 12px; color: var(--accent-train);
+  padding: 6px 0; font-weight: 600;
+}
+.timing-principles .body {
+  font-size: 12px; color: var(--text-dim); line-height: 1.7;
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 6px;
+}
+.timing-principles .body b { color: var(--text); }
+.timing-principles .body ol { padding-left: 18px; margin: 4px 0; }
+.timing-principles .body li { margin-bottom: 6px; }
+
 .cardio-card {
   background: linear-gradient(135deg, rgba(255,107,53,0.1), rgba(255,107,53,0.05));
   border: 1px solid rgba(255,107,53,0.2);

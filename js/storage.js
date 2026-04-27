@@ -15,10 +15,11 @@ MT.storage = (function() {
 
   function loadAllDays() {
     var all = safeParse(localStorage.getItem(DAYS_KEY), {});
-    // 相容舊資料：補齊 weight 欄
+    // 相容舊資料：補齊 weight / firstMealTime 欄
     for (var k in all) {
-      if (all[k] && typeof all[k] === 'object' && !('weight' in all[k])) {
-        all[k].weight = null;
+      if (all[k] && typeof all[k] === 'object') {
+        if (!('weight' in all[k])) all[k].weight = null;
+        if (!('firstMealTime' in all[k])) all[k].firstMealTime = null;
       }
     }
     return all;
@@ -39,7 +40,7 @@ MT.storage = (function() {
 
   function loadDay(dateStr) {
     var all = loadAllDays();
-    return all[dateStr] || { dayType: 'train', water: 0, salt: 0, weight: null, checked: {} };
+    return all[dateStr] || { dayType: 'train', water: 0, salt: 0, weight: null, checked: {}, firstMealTime: null };
   }
 
   function saveDay(dateStr, data) {
@@ -65,7 +66,8 @@ MT.storage = (function() {
       weight: Object.assign({}, MT.defaults.weight, raw.weight || {}),
       weekStart: (typeof raw.weekStart === 'number') ? raw.weekStart : MT.defaults.weekStart,
       weeklyReportLocation: raw.weeklyReportLocation || MT.defaults.weeklyReportLocation,
-      thresholds: Object.assign({}, MT.defaults.thresholds, raw.thresholds || {})
+      thresholds: Object.assign({}, MT.defaults.thresholds, raw.thresholds || {}),
+      mealTiming: Object.assign({}, MT.defaults.mealTiming, raw.mealTiming || {})
     };
   }
 

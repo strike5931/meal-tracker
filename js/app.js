@@ -6,6 +6,7 @@ MT.app = (function() {
   var state;
   var viewingDate = null;
   var editingWeight = false;
+  var editingAnchor = false;
 
   function today() { return MT.render.dateToKey(new Date()); }
   function isViewingHistory() { return viewingDate !== null; }
@@ -21,7 +22,8 @@ MT.app = (function() {
       water: saved.water || 0,
       salt: saved.salt || 0,
       weight: (saved.weight == null ? null : saved.weight),
-      checked: saved.checked || {}
+      checked: saved.checked || {},
+      firstMealTime: saved.firstMealTime || null
     };
     document.getElementById('date-label').textContent = MT.render.formatDateLabel(today());
     refreshUI();
@@ -38,7 +40,7 @@ MT.app = (function() {
     MT.render.dayToggle(state);
     MT.render.trackers(state, settings);
     MT.render.weight(state, settings, editingWeight);
-    MT.render.meals(state, settings);
+    MT.render.meals(state, settings, editingAnchor);
     MT.render.summary(state, settings);
     MT.render.streak(viewingDate, settings);
     renderWeeklyReport();
@@ -60,7 +62,8 @@ MT.app = (function() {
       water: state.water,
       salt: state.salt,
       weight: state.weight,
-      checked: state.checked
+      checked: state.checked,
+      firstMealTime: state.firstMealTime
     });
   }
 
@@ -78,12 +81,50 @@ MT.app = (function() {
 
   function toggleMeal(id) {
     if (isViewingHistory()) return;
-    state.checked[id] = !state.checked[id];
-    MT.render.meals(state, settings);
+    var willCheck = !state.checked[id];
+    state.checked[id] = willCheck;
+
+    // 若是第一餐：勾選 → 寫入錨點時間；取消勾 → 清除錨點
+    var dayMeals = settings.meals[state.dayType] || [];
+    if (dayMeals[0] && dayMeals[0].id === id && (settings.mealTiming || {}).enabled !== false) {
+      if (willCheck && !state.firstMealTime) {
+        state.firstMealTime = MT.timing.nowHHMM();
+      } else if (!willCheck) {
+        state.firstMealTime = null;
+        editingAnchor = false;
+      }
+    }
+
+    MT.render.meals(state, settings, editingAnchor);
     MT.render.streak(viewingDate, settings);
     renderWeeklyReport();
     saveCurrentDay();
     haptic();
+  }
+
+  // ==== 錨點時間編輯 ====
+  function editAnchor() {
+    if (isViewingHistory()) return;
+    editingAnchor = true;
+    MT.render.meals(state, settings, true);
+  }
+
+  function cancelAnchor() {
+    editingAnchor = false;
+    MT.render.meals(state, settings, false);
+  }
+
+  function saveAnchor() {
+    var el = document.getElementById('anchor-input');
+    if (!el) return;
+    var v = el.value;
+    if (!/^\d{2}:\d{2}$/.test(v)) { toast('⚠️ 時間格式錯誤'); return; }
+    state.firstMealTime = v;
+    editingAnchor = false;
+    saveCurrentDay();
+    MT.render.meals(state, settings, false);
+    haptic();
+    toast('✅ 已更新錨點 ' + v);
   }
 
   function addWater(amount) {
@@ -147,6 +188,8 @@ MT.app = (function() {
     state.water = 0;
     state.salt = 0;
     state.checked = {};
+    state.firstMealTime = null;
+    editingAnchor = false;
     // 體重保留
     refreshUI();
     saveCurrentDay();
@@ -156,12 +199,14 @@ MT.app = (function() {
     if (dateStr === today()) { backToToday(); return; }
     viewingDate = dateStr;
     editingWeight = false;
+    editingAnchor = false;
     var data = MT.storage.loadDay(dateStr);
     state.dayType = data.dayType;
     state.water = data.water;
     state.salt = data.salt;
     state.weight = (data.weight == null ? null : data.weight);
     state.checked = data.checked;
+    state.firstMealTime = data.firstMealTime || null;
 
     document.getElementById('history-banner').style.display = 'flex';
     document.getElementById('history-label').textContent = '📋 查看：' + MT.render.formatDateLabel(dateStr);
@@ -179,12 +224,14 @@ MT.app = (function() {
   function backToToday() {
     viewingDate = null;
     editingWeight = false;
+    editingAnchor = false;
     var data = MT.storage.loadDay(today());
     state.dayType = data.dayType || 'train';
     state.water = data.water || 0;
     state.salt = data.salt || 0;
     state.weight = (data.weight == null ? null : data.weight);
     state.checked = data.checked || {};
+    state.firstMealTime = data.firstMealTime || null;
 
     document.getElementById('history-banner').style.display = 'none';
     document.getElementById('date-label').textContent = MT.render.formatDateLabel(today());
@@ -253,6 +300,7 @@ MT.app = (function() {
       state.salt = saved.salt || 0;
       state.weight = (saved.weight == null ? null : saved.weight);
       state.checked = saved.checked || {};
+      state.firstMealTime = saved.firstMealTime || null;
       document.getElementById('date-label').textContent = MT.render.formatDateLabel(today());
       refreshUI();
     }
@@ -267,6 +315,7 @@ MT.app = (function() {
     toggleMeal: toggleMeal,
     addWater: addWater, addSalt: addSalt,
     editWeight: editWeight, saveWeight: saveWeight, cancelWeight: cancelWeight,
+    editAnchor: editAnchor, saveAnchor: saveAnchor, cancelAnchor: cancelAnchor,
     resetToday: resetToday,
     viewDate: viewDate, backToToday: backToToday,
     openSettings: openSettings,

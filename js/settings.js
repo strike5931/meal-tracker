@@ -28,6 +28,7 @@ MT.settings = (function() {
       renderTheme() +
       renderGoals() +
       renderWeightSettings() +
+      renderMealTiming() +
       renderMealsSection() +
       renderMacrosSection() +
       renderCardioSection() +
@@ -35,6 +36,46 @@ MT.settings = (function() {
       renderWeeklyReportSettings() +
       renderDataSection() +
       renderAboutSection();
+  }
+
+  // ---- 排餐時間建議 ----
+  function renderMealTiming() {
+    var t = draft.mealTiming || {};
+    return '<div class="settings-section">' +
+      '<div class="settings-section-title">🕐 排餐時間建議</div>' +
+      '<div class="settings-row"><label>啟用（勾第一餐自動排時間）</label>' +
+        '<input type="checkbox" '+(t.enabled!==false?'checked':'')+' onchange="MT.settings.setMealTiming(\'enabled\', this.checked)" style="width:20px;height:20px">' +
+      '</div>' +
+      '<div class="settings-row"><label>餐間隔 (h)</label>' +
+        '<input class="settings-input" type="number" step="0.5" min="2" max="5" value="'+t.intervalHours+'" oninput="MT.settings.setMealTiming(\'intervalHours\', this.value)">' +
+      '</div>' +
+      '<div class="settings-row"><label>練前餐 → 訓練 (min)</label>' +
+        '<input class="settings-input" type="number" step="5" min="15" max="90" value="'+t.preWorkoutToTraining+'" oninput="MT.settings.setMealTiming(\'preWorkoutToTraining\', this.value)">' +
+      '</div>' +
+      '<div class="settings-row"><label>訓練時長 含有氧 (min)</label>' +
+        '<input class="settings-input" type="number" step="5" min="30" max="180" value="'+t.trainingDuration+'" oninput="MT.settings.setMealTiming(\'trainingDuration\', this.value)">' +
+      '</div>' +
+      '<div class="settings-row"><label>練後餐 → 第三餐 (min)</label>' +
+        '<input class="settings-input" type="number" step="5" min="15" max="90" value="'+t.postWorkoutToNext+'" oninput="MT.settings.setMealTiming(\'postWorkoutToNext\', this.value)">' +
+      '</div>' +
+      '<div class="settings-row"><label>第三餐 → 第四餐 (h)</label>' +
+        '<input class="settings-input" type="number" step="0.5" min="1.5" max="5" value="'+t.postMeal3IntervalHours+'" oninput="MT.settings.setMealTiming(\'postMeal3IntervalHours\', this.value)">' +
+      '</div>' +
+      '<details class="timing-principles">' +
+        '<summary>📖 查看 5 項排餐原則</summary>' +
+        '<div class="body">' +
+          '<ol>' +
+            '<li><b>餐間隔 3-4 小時</b>：MPS 每次啟動持續 3-5h，太短浪費，太長有空窗。</li>' +
+            '<li><b>練前餐距離訓練 30-60 分鐘</b>：米糊+香蕉快碳 30-45 分達峰，剛好供能。</li>' +
+            '<li><b>練後餐 → 45 分鐘 → 第三餐</b>：教練規定。練後快碳+乳清啟動恢復，45 分後固體食物穩定供應胺基酸。</li>' +
+            '<li><b>米糊餐和肉餐分開</b>：米糊餐快進快出（第一/練前/練後），肉餐慢消化長時間供能，邏輯不要混。</li>' +
+            '<li><b>第一餐到最後一餐控制 12-14 小時內</b>：超過 14h 壓縮睡眠。睡前留 1-1.5h 消化。</li>' +
+          '</ol>' +
+          '<div style="margin-top:8px"><b>判斷流程：</b>固定訓練時間→往前推練前/第二/第一餐→往後排練後+45min(第三)+3h(第四)。</div>' +
+          '<div style="margin-top:6px"><b>彈性：</b>下午沒空可拉到 4h，但不超過 5h；練後+45min 是規定不能省。</div>' +
+        '</div>' +
+      '</details>' +
+    '</div>';
   }
 
   // ---- 統計頁入口 ----
@@ -290,6 +331,17 @@ MT.settings = (function() {
   }
   function setWeightShowAverages(v) { draft.weight.showAverages = !!v; MT.storage.saveSettings(draft); }
 
+  function setMealTiming(key, v) {
+    if (key === 'enabled') {
+      draft.mealTiming.enabled = !!v;
+    } else {
+      var n = parseFloat(v);
+      if (isNaN(n)) return;
+      draft.mealTiming[key] = n;
+    }
+    MT.storage.saveSettings(draft);
+  }
+
   function setWeeklyLocation(v) { draft.weeklyReportLocation = v; MT.storage.saveSettings(draft); render(); }
   function setWeekStart(v) { draft.weekStart = parseInt(v); MT.storage.saveSettings(draft); render(); }
 
@@ -401,6 +453,7 @@ MT.settings = (function() {
     setWeightUnit: setWeightUnit, setWeightPrecision: setWeightPrecision,
     setWeightTarget: setWeightTarget, setWeightShowAverages: setWeightShowAverages,
     setWeeklyLocation: setWeeklyLocation, setWeekStart: setWeekStart,
+    setMealTiming: setMealTiming,
     updateThreshold: updateThreshold,
     updateGoal: updateGoal, updateIncrement: updateIncrement,
     updateMeal: updateMeal, addMeal: addMeal, deleteMeal: deleteMeal, moveMeal: moveMeal,
