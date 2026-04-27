@@ -7,6 +7,7 @@ MT.app = (function() {
   var viewingDate = null;
   var editingWeight = false;
   var editingAnchor = false;
+  var cameFromStats = false;
 
   function today() { return MT.render.dateToKey(new Date()); }
   function isViewingHistory() { return viewingDate !== null; }
@@ -206,6 +207,15 @@ MT.app = (function() {
     saveCurrentDay();
   }
 
+  function viewDateFromStats(dateStr) {
+    cameFromStats = true;
+    viewDate(dateStr);
+  }
+
+  function backToStats() {
+    MT.statsui.open();
+  }
+
   function viewDate(dateStr) {
     if (dateStr === today()) { backToToday(); return; }
     viewingDate = dateStr;
@@ -222,6 +232,7 @@ MT.app = (function() {
     document.getElementById('history-banner').style.display = 'flex';
     document.getElementById('history-label').textContent = '📋 查看：' + MT.render.formatDateLabel(dateStr);
     document.getElementById('date-label').textContent = MT.render.formatDateLabel(dateStr);
+    document.getElementById('back-to-stats-btn').style.display = cameFromStats ? '' : 'none';
 
     document.getElementById('trackers-section').classList.add('readonly-overlay');
     document.getElementById('weight-section').classList.add('readonly-overlay');
@@ -236,6 +247,8 @@ MT.app = (function() {
     viewingDate = null;
     editingWeight = false;
     editingAnchor = false;
+    cameFromStats = false;
+    document.getElementById('back-to-stats-btn').style.display = 'none';
     var data = MT.storage.loadDay(today());
     state.dayType = data.dayType || 'train';
     state.water = data.water || 0;
@@ -328,7 +341,8 @@ MT.app = (function() {
     editWeight: editWeight, saveWeight: saveWeight, cancelWeight: cancelWeight,
     editAnchor: editAnchor, saveAnchor: saveAnchor, cancelAnchor: cancelAnchor,
     resetToday: resetToday,
-    viewDate: viewDate, backToToday: backToToday,
+    viewDate: viewDate, viewDateFromStats: viewDateFromStats,
+    backToToday: backToToday, backToStats: backToStats,
     openSettings: openSettings,
     applyTheme: applyTheme,
     toast: toast

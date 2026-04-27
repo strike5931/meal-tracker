@@ -154,9 +154,8 @@ MT.statsui = (function() {
 
   function jumpTo(key) {
     close();
-    // 關設定
     MT.settings.close();
-    MT.app.viewDate(key);
+    MT.app.viewDateFromStats(key);
   }
 
   function weightSection(trend, series, prec, unit, target, weeklyWeights) {

@@ -43,7 +43,10 @@
 
 <div id="history-banner" class="history-banner" style="display:none">
   <span id="history-label">📋 查看中：</span>
-  <button class="back-btn" onclick="MT.app.backToToday()">返回今天</button>
+  <div class="history-actions">
+    <button id="back-to-stats-btn" class="back-btn alt" onclick="MT.app.backToStats()" style="display:none">📅 返回月曆</button>
+    <button class="back-btn" onclick="MT.app.backToToday()">返回今天</button>
+  </div>
 </div>
 
 <div class="trackers" id="trackers-section">
