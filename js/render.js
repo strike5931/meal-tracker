@@ -154,19 +154,21 @@ MT.render = (function() {
         if (isEditingAnchor) {
           timingHTML = '<div class="meal-timing">' +
             '<span class="t-icon">🕐</span>' +
+            '<span style="color:var(--text-dim);font-size:11px">幾點吃的？</span>' +
             '<input id="anchor-input" class="anchor-input" type="time" value="'+(state.firstMealTime || MT.timing.nowHHMM())+'" onclick="event.stopPropagation()">' +
-            '<button class="t-btn ok" onclick="event.stopPropagation();MT.app.saveAnchor()">✓</button>' +
+            '<button class="t-btn ok" onclick="event.stopPropagation();MT.app.saveAnchor()">✓ 確定</button>' +
             '<button class="t-btn" onclick="event.stopPropagation();MT.app.cancelAnchor()">✕</button>' +
           '</div>';
         } else if (state.firstMealTime) {
           timingHTML = '<div class="meal-timing">' +
             '<span class="t-icon">🕐</span>' +
             '<span><b>錨點 ' + escapeHTML(state.firstMealTime) + '</b></span>' +
-            '<button class="t-btn" onclick="event.stopPropagation();MT.app.editAnchor()">編輯</button>' +
+            '<button class="t-btn ok" onclick="event.stopPropagation();MT.app.editAnchor()">📝 改時間</button>' +
           '</div>';
         } else {
           timingHTML = '<div class="meal-timing dim">' +
-            '<span class="t-icon">🕐</span>勾選第一餐自動排出時間表' +
+            '<span class="t-icon">🕐</span>勾第一餐自動排出時間表' +
+            '<button class="t-btn" onclick="event.stopPropagation();MT.app.editAnchor()">📝 設定時間</button>' +
           '</div>';
         }
       } else if (timingEnabled && timing && timing.times[idx] != null) {

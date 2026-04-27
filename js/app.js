@@ -84,12 +84,14 @@ MT.app = (function() {
     var willCheck = !state.checked[id];
     state.checked[id] = willCheck;
 
-    // 若是第一餐：勾選 → 寫入錨點時間；取消勾 → 清除錨點
+    // 若是第一餐：勾選 → 寫入錨點 + 自動進入編輯模式（讓使用者改成實際進食時間）
+    //              取消勾 → 清除錨點
     var dayMeals = settings.meals[state.dayType] || [];
     if (dayMeals[0] && dayMeals[0].id === id && (settings.mealTiming || {}).enabled !== false) {
-      if (willCheck && !state.firstMealTime) {
-        state.firstMealTime = MT.timing.nowHHMM();
-      } else if (!willCheck) {
+      if (willCheck) {
+        if (!state.firstMealTime) state.firstMealTime = MT.timing.nowHHMM();
+        editingAnchor = true;
+      } else {
         state.firstMealTime = null;
         editingAnchor = false;
       }
@@ -109,11 +111,6 @@ MT.app = (function() {
     MT.render.meals(state, settings, true);
   }
 
-  function cancelAnchor() {
-    editingAnchor = false;
-    MT.render.meals(state, settings, false);
-  }
-
   function saveAnchor() {
     var el = document.getElementById('anchor-input');
     if (!el) return;
@@ -123,8 +120,22 @@ MT.app = (function() {
     editingAnchor = false;
     saveCurrentDay();
     MT.render.meals(state, settings, false);
+    MT.render.streak(viewingDate, settings);
+    renderWeeklyReport();
     haptic();
-    toast('✅ 已更新錨點 ' + v);
+    toast('✅ 第一餐 ' + v);
+  }
+
+  function cancelAnchor() {
+    editingAnchor = false;
+    // 若是「剛勾第一餐就取消編輯」這種情況，保留勾選與當下時間（已存入）
+    // 若是「未勾但設定時間後取消」→ 清掉時間（沒確認過）
+    var dayMeals = settings.meals[state.dayType] || [];
+    if (dayMeals[0] && !state.checked[dayMeals[0].id]) {
+      state.firstMealTime = null;
+      saveCurrentDay();
+    }
+    MT.render.meals(state, settings, false);
   }
 
   function addWater(amount) {

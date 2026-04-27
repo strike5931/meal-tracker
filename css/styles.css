@@ -373,17 +373,23 @@ button { font-family: inherit; }
   font-size: 13px;
 }
 .meal-timing .t-btn {
-  padding: 3px 8px;
+  padding: 5px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--surface2);
   color: var(--text);
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
   font-family: inherit;
 }
+.meal-timing .t-btn:active { transform: scale(0.95); }
 .meal-timing .t-btn.ok {
   background: var(--accent-weight); color: #fff; border-color: var(--accent-weight);
+}
+.meal-timing .anchor-input {
+  font-size: 16px;  /* 防止 iOS 自動放大 */
+  font-weight: 700;
 }
 
 /* meal timing principles details */
