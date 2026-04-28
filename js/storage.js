@@ -54,12 +54,14 @@ MT.storage = (function() {
     return {
       goals:  Object.assign({}, MT.defaults.goals,  raw.goals  || {}),
       meals:  {
-        train: raw.meals && raw.meals.train ? raw.meals.train : deepClone(MT.defaults.meals.train),
-        rest:  raw.meals && raw.meals.rest  ? raw.meals.rest  : deepClone(MT.defaults.meals.rest)
+        train:    raw.meals && raw.meals.train    ? raw.meals.train    : deepClone(MT.defaults.meals.train),
+        train_pm: raw.meals && raw.meals.train_pm ? raw.meals.train_pm : deepClone(MT.defaults.meals.train_pm),
+        rest:     raw.meals && raw.meals.rest     ? raw.meals.rest     : deepClone(MT.defaults.meals.rest)
       },
       macros: {
-        train: Object.assign({}, MT.defaults.macros.train, (raw.macros && raw.macros.train) || {}),
-        rest:  Object.assign({}, MT.defaults.macros.rest,  (raw.macros && raw.macros.rest)  || {})
+        train:    Object.assign({}, MT.defaults.macros.train,    (raw.macros && raw.macros.train)    || {}),
+        train_pm: Object.assign({}, MT.defaults.macros.train_pm, (raw.macros && raw.macros.train_pm) || {}),
+        rest:     Object.assign({}, MT.defaults.macros.rest,     (raw.macros && raw.macros.rest)     || {})
       },
       cardio: Object.assign({}, MT.defaults.cardio, raw.cardio || {}),
       theme: raw.theme || MT.defaults.theme,

@@ -36,7 +36,7 @@ MT.stats = (function() {
     for (var i = 0; i < dm.length; i++) {
       if (dayData.checked && dayData.checked[dm[i].id]) checkedCount++;
     }
-    var cardioEnabled = (dayData.dayType === 'train' && settings.cardio && settings.cardio.enabled);
+    var cardioEnabled = ((dayData.dayType === 'train' || dayData.dayType === 'train_pm') && settings.cardio && settings.cardio.enabled);
     var cardioDone = cardioEnabled ? !!(dayData.checked && dayData.checked['cardio']) : false;
 
     // 有氧納入餐點比例
@@ -105,7 +105,7 @@ MT.stats = (function() {
     var saltSum = 0,  saltDays = 0;
     var mealsCheckedTotal = 0, mealsPossibleTotal = 0;
     var cardioDone = 0, cardioPossible = 0;
-    var trainDays = 0, restDays = 0;
+    var trainDays = 0, trainPmDays = 0, restDays = 0;
     var weightSum = 0, weightDays = 0;
     var waterHit = 0, saltHit = 0, mealHit = 0;
 
@@ -117,6 +117,7 @@ MT.stats = (function() {
       if (c.hasData) {
         logged++;
         if (d.dayType === 'train') trainDays++;
+        else if (d.dayType === 'train_pm') trainPmDays++;
         else if (d.dayType === 'rest') restDays++;
 
         waterSum += d.water || 0; waterDays++;
@@ -134,7 +135,7 @@ MT.stats = (function() {
 
     return {
       days: days, logged: logged, perfect: perfect, goalHit: goalHit,
-      trainDays: trainDays, restDays: restDays,
+      trainDays: trainDays, trainPmDays: trainPmDays, restDays: restDays,
       waterAvg: waterDays > 0 ? waterSum / waterDays : 0,
       saltAvg:  saltDays  > 0 ? saltSum  / saltDays  : 0,
       weightAvg: weightDays > 0 ? weightSum / weightDays : null,

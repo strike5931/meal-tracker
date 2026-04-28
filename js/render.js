@@ -124,6 +124,7 @@ MT.render = (function() {
     var container = document.getElementById('meals-container');
     var dayMeals = settings.meals[state.dayType] || [];
     var isRest = state.dayType === 'rest';
+    var isTraining = (state.dayType === 'train' || state.dayType === 'train_pm');
     var macro = settings.macros[state.dayType] || { kcal: '' };
 
     // 計算排餐時間
@@ -134,7 +135,9 @@ MT.render = (function() {
       timing = MT.timing.compute(state.firstMealTime, dayMeals, mt);
     }
 
-    var html = '<div class="section-label">🍽️ '+(isRest?'休息日':'訓練日')+'菜單 ・ ' + escapeHTML(macro.kcal) + ' kcal';
+    var dayLabel = state.dayType === 'train' ? '🌅 早訓' :
+                   state.dayType === 'train_pm' ? '🌙 晚訓' : '😴 休息日';
+    var html = '<div class="section-label">🍽️ '+dayLabel+'菜單 ・ ' + escapeHTML(macro.kcal) + ' kcal';
     if (timing) {
       var win = MT.timing.totalWindow(timing).toFixed(1);
       var winCls = (parseFloat(win) > 14) ? 'style="color:var(--warn)"' : '';
@@ -198,7 +201,7 @@ MT.render = (function() {
         '</div></div>';
     });
 
-    if (state.dayType === 'train' && settings.cardio && settings.cardio.enabled) {
+    if (isTraining && settings.cardio && settings.cardio.enabled) {
       var cc = state.checked['cardio'] ? 'checked' : '';
       var trainTimeText = '';
       if (timing && timing.trainingStart != null && timing.trainingEnd != null) {

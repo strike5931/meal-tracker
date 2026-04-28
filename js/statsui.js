@@ -75,7 +75,7 @@ MT.statsui = (function() {
       '<div class="settings-row"><label>💧 平均飲水</label><b>'+(summary.waterAvg>0?Math.round(summary.waterAvg)+' ml':'—')+'</b></div>' +
       '<div class="settings-row"><label>🧂 平均鹽</label><b>'+(summary.saltAvg>0?summary.saltAvg.toFixed(1)+' g':'—')+'</b></div>' +
       '<div class="settings-row"><label>⚖️ 平均體重</label><b>'+(summary.weightAvg!=null?fnum(summary.weightAvg,prec)+' '+esc(unit):'—')+'</b></div>' +
-      '<div class="settings-row"><label>🔥/😴 訓練 / 休息</label><b>'+summary.trainDays+' / '+summary.restDays+'</b></div>' +
+      '<div class="settings-row"><label>🌅/🌙/😴 早訓/晚訓/休息</label><b>'+summary.trainDays+' / '+summary.trainPmDays+' / '+summary.restDays+'</b></div>' +
     '</div>';
 
     // ---- 熱圖 ----

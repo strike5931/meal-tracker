@@ -220,8 +220,9 @@ MT.settings = (function() {
     var h = '<div class="settings-section">' +
       '<div class="settings-section-title">🍽️ 菜單編輯</div>' +
       '<div class="sub-tabs">' +
-        '<button class="sub-tab '+(currentTab==='train'?'active':'')+'" onclick="MT.settings.switchTab(\'train\')">🔥 訓練日 ('+draft.meals.train.length+')</button>' +
-        '<button class="sub-tab '+(currentTab==='rest'?'active':'')+'" onclick="MT.settings.switchTab(\'rest\')">😴 休息日 ('+draft.meals.rest.length+')</button>' +
+        '<button class="sub-tab '+(currentTab==='train'?'active':'')+'" onclick="MT.settings.switchTab(\'train\')">🌅 早訓 ('+draft.meals.train.length+')</button>' +
+        '<button class="sub-tab '+(currentTab==='train_pm'?'active':'')+'" onclick="MT.settings.switchTab(\'train_pm\')">🌙 晚訓 ('+draft.meals.train_pm.length+')</button>' +
+        '<button class="sub-tab '+(currentTab==='rest'?'active':'')+'" onclick="MT.settings.switchTab(\'rest\')">😴 休息 ('+draft.meals.rest.length+')</button>' +
       '</div>';
     list.forEach(function(m, idx) { h += mealEditor(m, idx); });
     h += '<button class="btn full" onclick="MT.settings.addMeal()">＋ 新增一餐</button>';
@@ -257,14 +258,19 @@ MT.settings = (function() {
   }
 
   function renderMacrosSection() {
-    var t = draft.macros.train, r = draft.macros.rest;
+    var t = draft.macros.train, p = draft.macros.train_pm, r = draft.macros.rest;
     return '<div class="settings-section">' +
       '<div class="settings-section-title">📊 營養概估</div>' +
-      '<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">🔥 訓練日</div>' +
+      '<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">🌅 早訓</div>' +
       rowLabel('熱量', macroInput('train', 'kcal', t.kcal)) +
       rowLabel('碳水', macroInput('train', 'carbs', t.carbs)) +
       rowLabel('蛋白', macroInput('train', 'protein', t.protein)) +
       rowLabel('脂肪', macroInput('train', 'fat', t.fat)) +
+      '<div style="font-size:11px;color:var(--text-dim);margin:10px 0 8px">🌙 晚訓</div>' +
+      rowLabel('熱量', macroInput('train_pm', 'kcal', p.kcal)) +
+      rowLabel('碳水', macroInput('train_pm', 'carbs', p.carbs)) +
+      rowLabel('蛋白', macroInput('train_pm', 'protein', p.protein)) +
+      rowLabel('脂肪', macroInput('train_pm', 'fat', p.fat)) +
       '<div style="font-size:11px;color:var(--text-dim);margin:10px 0 8px">😴 休息日</div>' +
       rowLabel('熱量', macroInput('rest', 'kcal', r.kcal)) +
       rowLabel('碳水', macroInput('rest', 'carbs', r.carbs)) +

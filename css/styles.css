@@ -149,10 +149,15 @@ button { font-family: inherit; }
   background: var(--accent-train); color: #fff;
   box-shadow: 0 4px 20px rgba(255,107,53,0.3);
 }
+.day-btn.active[data-day="train_pm"] {
+  background: var(--accent-weight); color: #fff;
+  box-shadow: 0 4px 20px rgba(179,136,255,0.3);
+}
 .day-btn.active[data-day="rest"] {
   background: var(--accent-rest); color: #fff;
   box-shadow: 0 4px 20px rgba(78,205,196,0.3);
 }
+.day-btn { font-size: 13px; }  /* 3 顆字小一點 */
 
 /* ==========================================
    Streak
